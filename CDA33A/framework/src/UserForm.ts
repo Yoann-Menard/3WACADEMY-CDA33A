@@ -14,8 +14,8 @@ export class UserForm extends View<User, UserProps> {
     <h1>User UserForm</h1>
     <label>Name:</label>
     <input minlength = 5  />
-    <button>Save</button>
     <button class="set-age">Set Random Age</button>
+		<button class="set-name">Set Name</button>
 		<button class="save-model">Save</button>
     </div>
     `;
