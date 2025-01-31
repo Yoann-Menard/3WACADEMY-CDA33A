@@ -1,9 +1,9 @@
 // interface HasOn {
 //   on(eventName: string, callback: () => void): void
+// }
 
 import { HasId } from './interfaces/HasId.interface';
 import { Model } from './Model';
-// }
 export abstract class View<T extends Model<P>, P extends HasId> {
 	regions: { [key: string]: Element } = {};
 	constructor(public parent: Element, public model: T) {

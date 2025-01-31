@@ -12,51 +12,6 @@
       __defProp(target, name, { get: all3[name], enumerable: true });
   };
 
-  // src/lib/implementations/Attributes.ts
-  var Attributes;
-  var init_Attributes = __esm({
-    "src/lib/implementations/Attributes.ts"() {
-      Attributes = class {
-        constructor(data) {
-          this.data = data;
-        }
-        get = (key) => {
-          return this.data[key];
-        };
-        set(update) {
-          Object.assign(this.data, update);
-        }
-        getAll() {
-          return this.data;
-        }
-      };
-    }
-  });
-
-  // src/lib/implementations/Eventing.ts
-  var Eventing;
-  var init_Eventing = __esm({
-    "src/lib/implementations/Eventing.ts"() {
-      Eventing = class {
-        events = {};
-        on = (eventName, callback) => {
-          const handlers = this.events[eventName] || [];
-          handlers.push(callback);
-          this.events[eventName] = handlers;
-        };
-        trigger = (eventName) => {
-          const handlers = this.events[eventName];
-          if (!handlers || handlers.length === 0) {
-            return;
-          }
-          handlers.forEach((callback) => {
-            callback();
-          });
-        };
-      };
-    }
-  });
-
   // node_modules/axios/lib/helpers/bind.js
   function bind(fn, thisArg) {
     return function wrap() {
@@ -2939,6 +2894,30 @@
     }
   });
 
+  // src/lib/implementations/Eventing.ts
+  var Eventing;
+  var init_Eventing = __esm({
+    "src/lib/implementations/Eventing.ts"() {
+      Eventing = class {
+        events = {};
+        on = (eventName, callback) => {
+          const handlers = this.events[eventName] || [];
+          handlers.push(callback);
+          this.events[eventName] = handlers;
+        };
+        trigger = (eventName) => {
+          const handlers = this.events[eventName];
+          if (!handlers || handlers.length === 0) {
+            return;
+          }
+          handlers.forEach((callback) => {
+            callback();
+          });
+        };
+      };
+    }
+  });
+
   // src/lib/Collection.ts
   var Collection;
   var init_Collection = __esm({
@@ -2967,6 +2946,50 @@
             this.trigger("change");
           });
           return this.models;
+        }
+      };
+    }
+  });
+
+  // src/lib/implementations/Attributes.ts
+  var Attributes;
+  var init_Attributes = __esm({
+    "src/lib/implementations/Attributes.ts"() {
+      Attributes = class {
+        constructor(data) {
+          this.data = data;
+        }
+        get = (key) => {
+          return this.data[key];
+        };
+        set(update) {
+          Object.assign(this.data, update);
+        }
+        getAll() {
+          return this.data;
+        }
+      };
+    }
+  });
+
+  // src/lib/implementations/Sync.ts
+  var Sync;
+  var init_Sync = __esm({
+    "src/lib/implementations/Sync.ts"() {
+      init_axios2();
+      Sync = class {
+        constructor(apiUrl2) {
+          this.apiUrl = apiUrl2;
+        }
+        fetch(id) {
+          return axios_default.get(`${this.apiUrl}/${id}`);
+        }
+        save(data) {
+          const { id } = data;
+          if (id) {
+            return axios_default.patch(`${this.apiUrl}/${id}`, data);
+          }
+          return axios_default.post(`${this.apiUrl}`, data);
         }
       };
     }
@@ -3014,40 +3037,20 @@
     }
   });
 
-  // src/lib/implementations/Sync.ts
-  var Sync;
-  var init_Sync = __esm({
-    "src/lib/implementations/Sync.ts"() {
-      init_axios2();
-      Sync = class {
-        constructor(apiUrl2) {
-          this.apiUrl = apiUrl2;
-        }
-        fetch(id) {
-          return axios_default.get(`${this.apiUrl}/${id}`);
-        }
-        save(data) {
-          const { id } = data;
-          if (id) {
-            return axios_default.patch(`${this.apiUrl}/${id}`, data);
-          }
-          return axios_default.post(`${this.apiUrl}`, data);
-        }
-      };
-    }
-  });
-
   // src/User.ts
   var apiUrl, User;
   var init_User = __esm({
     "src/User.ts"() {
+      init_Collection();
       init_Attributes();
       init_Eventing();
-      init_Collection();
-      init_Model();
       init_Sync();
+      init_Model();
       apiUrl = "http://localhost:3000/users";
       User = class _User extends Model {
+        getAll() {
+          throw new Error("Method not implemented.");
+        }
         static buildUser(attrs) {
           return new _User(
             new Attributes(attrs),
@@ -3178,6 +3181,58 @@
     }
   });
 
+  // src/UserList.ts
+  var UserList;
+  var init_UserList = __esm({
+    "src/UserList.ts"() {
+      init_View();
+      init_User();
+      UserList = class extends View {
+        users;
+        constructor(parent, users) {
+          super(parent, User.buildUser({ id: "0", name: "", age: 0 }));
+          this.users = users;
+          this.users.on("change", () => this.render());
+          this.users.fetch();
+        }
+        template() {
+          return `
+            <div>
+                <h1>User List</h1>
+                <select class="user-select">
+                    ${this.users.models.map(
+            (user) => `
+                        <option value="${user.get("id")}">${user.get(
+              "name"
+            )}</option>
+                    `
+          ).join("")}
+                </select>
+            </div>
+        `;
+        }
+        eventsMap() {
+          return {
+            "change:.user-select": this.onUserSelected
+          };
+        }
+        onUserSelected = () => {
+          const select = this.parent.querySelector(
+            ".user-select"
+          );
+          const selectedUserId = select.value;
+          const selectedUser = this.users.models.find(
+            (user) => user.get("id") === selectedUserId
+          );
+          if (selectedUser) {
+            this.model.set(selectedUser.getAll());
+            this.model.trigger("change");
+          }
+        };
+      };
+    }
+  });
+
   // src/UserShow.ts
   var UserShow;
   var init_UserShow = __esm({
@@ -3205,27 +3260,37 @@
   var init_UserEdit = __esm({
     "src/UserEdit.ts"() {
       init_View();
+      init_User();
       init_UserForm();
+      init_UserList();
       init_UserShow();
+      init_Collection();
       UserEdit = class extends View {
         template() {
           return `
     <div>
       <div class="user-show"></div>
       <div class="user-form"></div>
+			<div class="user-list"></div>
     </div>
   `;
         }
         regionsMap() {
           return {
             userShow: ".user-show",
-            userForm: ".user-form"
+            userForm: ".user-form",
+            userList: ".user-list"
           };
         }
         attachViews() {
           console.log(this.regions);
+          const users = new Collection(
+            "http://localhost:3000/users",
+            (json) => User.buildUser(json)
+          );
           new UserForm(this.regions.userForm, this.model).render();
           new UserShow(this.regions.userShow, this.model).render();
+          new UserList(this.regions.userList, users).render();
         }
         eventsMap() {
           return {};
@@ -3239,11 +3304,13 @@
     "src/index.ts"() {
       init_User();
       init_UserEdit();
+      init_UserList();
       var rootElement = document.getElementById("root");
       var john = User.buildUser({ name: "John Doe", age: 45 });
       var userEdit = new UserEdit(rootElement, john);
       userEdit.render();
       console.log(userEdit);
+      console.log(UserList);
     }
   });
   require_index();

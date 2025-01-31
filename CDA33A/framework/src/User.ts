@@ -1,8 +1,8 @@
+import { Collection } from './lib/Collection';
 import { Attributes } from './lib/implementations/Attributes';
 import { Eventing } from './lib/implementations/Eventing';
-import { Collection } from './lib/Collection';
-import { Model } from './lib/Model';
 import { Sync } from './lib/implementations/Sync';
+import { Model } from './lib/Model';
 export interface UserProps {
 	id?: string;
 	name?: string;
@@ -12,6 +12,9 @@ export interface UserProps {
 const apiUrl = 'http://localhost:3000/users';
 
 export class User extends Model<UserProps> {
+  getAll(): UserProps {
+    throw new Error('Method not implemented.');
+  }
 	static buildUser(attrs: UserProps) {
 		return new User(
 			new Attributes<UserProps>(attrs),

@@ -1,0 +1,23 @@
+{
+	"name": "ressource_manager",
+	"version": "1.0.0",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start:build": "esbuild src/index.ts --bundle --outfile=dist/index.js --watch",
+		"start:run": "node dist/index.js",
+		"start": "concurrently npm:start:*"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "commonjs",
+	"description": "",
+	"dependencies": {
+		"ressource_manager": "file:"
+	},
+	"devDependencies": {
+		"concurrently": "^9.1.2",
+		"esbuild": "^0.24.2"
+	}
+}
